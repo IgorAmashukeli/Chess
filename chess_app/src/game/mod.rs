@@ -1,10 +1,18 @@
-use crate::cell::*;
-use crate::piece::*;
+use crate::cell::Cell;
+use crate::piece::{Color, PieceType, Piece, };
+
+pub mod moves;
+pub mod shapes;
+pub mod reachable;
+pub mod free;
+
+pub type Board = [[Cell; 8]; 8];
+pub type PieceSet = [Piece; 32];
 
 #[derive(Debug)]
 pub struct Game {
-    board : [[Cell; 8]; 8],
-    piece_set : [Piece; 32],
+    board : Board,
+    piece_set : PieceSet,
     active_color : Color,
     white_short_castle : bool,
     white_long_castle : bool,
@@ -20,7 +28,7 @@ impl Default for Game {
         Self {
             board : [
             [Cell::new(Some(12)), Cell::new(Some(8)), Cell::new(Some(10)), Cell::new(Some(14)),
-            Cell::new(Some(15)), Cell::new(Some(11)), Cell::new(Some(19)), Cell::new(Some(13))],
+            Cell::new(Some(15)), Cell::new(Some(11)), Cell::new(Some(9)), Cell::new(Some(13))],
             [Cell::new(Some(0)), Cell::new(Some(1)), Cell::new(Some(2)), Cell::new(Some(3)),
             Cell::new(Some(4)), Cell::new(Some(5)), Cell::new(Some(6)), Cell::new(Some(7))],
             [Cell::new(None), Cell::new(None), Cell::new(None), Cell::new(None), 
@@ -36,7 +44,8 @@ impl Default for Game {
             [Cell::new(Some(28)), Cell::new(Some(24)), Cell::new(Some(26)), Cell::new(Some(30)),
             Cell::new(Some(31)), Cell::new(Some(27)), Cell::new(Some(25)), Cell::new(Some(29))], 
              ],
-            piece_set : [Piece::new(Color::White, PieceType::Pawn, Some((1, 0))),
+            piece_set : [
+            Piece::new(Color::White, PieceType::Pawn, Some((1, 0))),
             Piece::new(Color::White, PieceType::Pawn, Some((1, 1))),
             Piece::new(Color::White, PieceType::Pawn, Some((1, 2))),
             Piece::new(Color::White, PieceType::Pawn, Some((1, 3))),
@@ -101,8 +110,8 @@ impl Game {
         }
     }
 
-    pub fn play() {
-        
+    pub fn play(&self) {
+         println!("{:?}", reachable::is_reachable_knight(&self, 0, 1, 1, 3));
     }
-}
 
+}

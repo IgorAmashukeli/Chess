@@ -1,10 +1,10 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Color {
     White,
     Black,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PieceType {
     Pawn,
     Knight,
@@ -16,17 +16,13 @@ pub enum PieceType {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Piece {
-    color : Color,
-    piece_type : PieceType,
-    cell : Option<(u8, u8)>
+    pub color : Color,
+    pub piece_type : PieceType,
+    pub cell : Option<(u8, u8)>,
 }
 
 impl Piece {
     pub fn new(color : Color, piece_type : PieceType, cell : Option<(u8, u8)>) -> Piece {
         Piece {color, piece_type, cell}
-    }
-
-    pub fn is_on_board(&self) -> bool {
-        return self.cell != None
     }
 }
