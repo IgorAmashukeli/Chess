@@ -61,3 +61,13 @@ pub fn is_pawn_shape_take_blck(row_st : u8, col_st : u8, row_fn : u8, col_fn : u
     let dist_col = cmp::max(col_fn, col_st) - cmp::min(col_fn, col_st);
     return (dist_col == 1) && (row_st == row_fn + 1)
 }
+
+pub fn is_pawn_shape_en_passant_wht(row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+    return row_st == 4 && row_fn == 5 && (cmp::max(col_fn, col_st) - cmp::min(col_fn, col_st) == 1);
+}
+
+pub fn is_pawn_shape_en_passant_blck(row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+    return row_st == 5 && row_fn == 4 && (cmp::max(col_fn, col_st) - cmp::min(col_fn, col_st) == 1);
+}
+
+

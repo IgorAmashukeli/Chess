@@ -1,4 +1,6 @@
 use crate::cell::Cell;
+use crate::game::moves::is_under_check;
+use crate::game::reachable::*;
 use crate::piece::{Color, PieceType, Piece, };
 
 pub mod moves;
@@ -111,7 +113,8 @@ impl Game {
     }
 
     pub fn play(&self) {
-         println!("{:?}", reachable::is_reachable_knight(&self, 0, 1, 1, 3));
+         
+         
     }
 
 }
