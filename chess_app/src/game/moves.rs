@@ -1,5 +1,6 @@
-use crate::{game::{Game, reachable::*, shapes::*}, piece::*};
+use crate::{game::{Game, free::*, generate::* , reachable::*, shapes::* }, piece::{self, *}};
 use crate::{game::shapes};
+use std::cmp;
 
 static WHITE_KING_IND : u8 = 15;
 static BLACK_KING_IND : u8 = 31;
@@ -39,18 +40,66 @@ pub fn is_under_check(game : &Game) -> bool {
 pub fn is_after_move_under_check(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
     let mut game_after_move = Game::new(game.board, game.piece_set, game.active_color, game.white_short_castle, game.white_long_castle, 
         game.black_short_castle, game.black_long_castle, game.enpassant_sq, game.rule50_clock, game.move_number);
-    try_move(&mut game_after_move, row_st, col_st, row_fn, col_fn);
+    try_to_move(&mut game_after_move, row_st, col_st, row_fn, col_fn);
     return is_under_check(&game_after_move);
 }
 
 
-pub fn try_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) {
-
+pub fn move_piece(game : &mut Game, piece_ind : u8, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) {
+    game.board[row_st as usize][col_st as usize].piece = None;
+    game.board[row_fn as usize][col_fn as usize].piece = Some(piece_ind);
+    game.piece_set[piece_ind as usize].cell = Some((row_fn, col_fn));
 }
 
 
+pub fn take_piece(game : &mut Game, row : u8, col : u8) {
+    let piece_ind_opt = get_piece_ind(game, row, col);
+    assert!(piece_ind_opt != None);
+    let piece_ind = piece_ind_opt.unwrap();
+    game.piece_set[piece_ind as usize].cell = None;
+    game.board[row as usize][col as usize].piece = None;
+}
+
+
+pub fn try_to_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) {
+    let piece_ind_opt = get_piece_ind(game, row_st, col_st);
+    assert!(piece_ind_opt != None);
+    let piece_ind = piece_ind_opt.unwrap();
+    
+    if is_free(game, row_fn, col_fn) {
+        if get_piece_type(game, piece_ind) == PieceType::Pawn && 
+        (is_pawn_shape_en_passant_wht(row_st, col_st, row_fn, col_fn) || is_pawn_shape_en_passant_blck(row_st, col_st, row_fn, col_fn)) {
+            assert!(is_opponent(game, row_st, col_fn, game.active_color));
+            take_piece(game, row_st, col_fn);
+        }
+    } else {
+        assert!(is_opponent(game, row_fn, col_fn, game.active_color));
+        take_piece(game, row_fn, col_fn);
+    }
+    move_piece(game, piece_ind, row_st, col_st, row_fn, col_fn);
+}
+
+
+pub fn is_king_and_between_under_check(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+    let dist = cmp::max(col_st, col_fn) - cmp::min(col_st, col_fn);
+    if is_under_check(game) {
+        return true;
+    }
+    for i in 1..dist {
+        if is_after_move_under_check(game, row_st, col_st, row_st, col_st + i) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 pub fn can_move(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+    if !is_correct_cell(row_st, col_st) || !is_correct_cell(row_fn, col_fn) {
+        return false;
+    }
+
     if !is_reachable(game, row_st, col_st, row_fn, col_fn) {
         return false;
     }
@@ -59,28 +108,190 @@ pub fn can_move(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8
     assert!(piece_ind_opt != None);
     let piece_ind = piece_ind_opt.unwrap();
 
-
-    if is_after_move_under_check(game, row_st, row_fn, col_st, col_fn) {
+    if is_after_move_under_check(game, row_st, col_st, row_fn, col_fn) {
         return false;
     }
 
-    
-    // TODO : check en passant and castling rules
-   
+    let piece_type = get_piece_type(game, piece_ind);
 
+    if (piece_type == PieceType::Pawn) && is_pawn_shape_en_passant_wht(row_st, col_st, row_fn, col_fn) && 
+    is_free(game, row_fn, col_fn) {
+        if game.enpassant_sq == None {
+            return false;
+        }
+
+        let en_pass_sq = game.enpassant_sq.unwrap();
+        return (en_pass_sq.0 == row_st) && (en_pass_sq.1 == col_fn);
+    }
+
+
+    if (piece_type == PieceType::Pawn) && is_pawn_shape_en_passant_blck(row_st, col_st, row_fn, col_fn) && 
+    is_free(game, row_fn, col_fn) {
+        if game.enpassant_sq == None {
+            return false;
+        }
+
+        let en_pass_sq = game.enpassant_sq.unwrap();
+        return (en_pass_sq.0 == row_st) && (en_pass_sq.1 == col_fn);
+    }
+
+
+    if piece_type == PieceType::King && is_king_wh_shrt_castle_shape(row_st, col_st, row_fn, col_fn) {
+        if !game.white_short_castle {
+            return false;
+        }
+
+        return !is_king_and_between_under_check(game, row_st, col_st, row_fn, col_fn);
+
+    }
+
+    if piece_type == PieceType::King && is_king_wh_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
+        if !game.white_long_castle {
+            return false;
+        }
+
+        return !is_king_and_between_under_check(game, row_st, col_st, row_fn, col_fn);
+    }
+
+    if piece_type == PieceType::King && is_king_blck_shrt_castle_shape(row_st, col_st, row_fn, col_fn) {
+        if !game.black_short_castle {
+            return false;
+        }
+
+        return !is_king_and_between_under_check(game, row_st, col_st, row_fn, col_fn);
+    }
+
+    if piece_type == PieceType::King && is_king_blck_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
+        if !game.black_long_castle {
+            return false;
+        }
+
+        return !is_king_and_between_under_check(game, row_st, col_st, row_fn, col_fn);
+    }
 
     return true;
 }
 
 
-pub fn make_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) {
+
+
+
+pub fn gen_all_piece_moves(game : &Game, row_st : u8, col_st : u8, piece_type : PieceType, piece_color : Color,
+     res : &mut Vec<String>) {
+     match piece_type {
+            PieceType::Knight => gen_all_moves_knight(game, row_st, col_st, res),
+
+            PieceType::Bishop => gen_all_moves_bishop(game, row_st, col_st, res),
+
+            PieceType::Rook => gen_all_moves_rook(game, row_st, col_st, res),
+
+            PieceType::Queen => gen_all_moves_queen(game, row_st, col_st, res),
+
+            PieceType::King => gen_all_moves_king(game, row_st, col_st, res),
+
+            PieceType::Pawn => gen_all_moves_pawn(game, row_st, col_st, res)
+        }
+}
+
+
+pub fn gen_all_moves(game : &Game) -> Vec<String> {
+    let mut res : Vec<String> = [].to_vec();
+
+    for i in 0..16 {
+        let mut ind = i;
+        if game.active_color == Color::Black {
+            ind = i + 16;
+        }
+        let piece_cell_opt = game.piece_set[ind as usize].cell;
+        if piece_cell_opt == None {
+            continue;
+        }
+        let piece_cell = piece_cell_opt.unwrap();
+
+        gen_all_piece_moves(game, piece_cell.0, piece_cell.1, get_piece_type(game, ind), 
+        get_piece_color(game, ind), &mut res);
+    }
+
+    return res;
+}
+
+
+pub fn fix_castling_flags(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
+    let piece_type = get_piece_type(game, piece_ind);
+    let color = get_piece_color(game, piece_ind);
+    if (piece_type == PieceType::King) && (color == Color::White)
+    {
+        game.white_short_castle = false;
+        game.white_long_castle = false;
+    }
+    if (piece_type == PieceType::King) && (color == Color::Black) {
+        game.black_short_castle = false;
+        game.black_long_castle = false;
+    }
+
+    if piece_ind == 12 {
+        game.white_long_castle = false;
+    }
+    if piece_ind == 13 {
+        game.white_long_castle = false;
+    }
+    if piece_ind == 28 {
+        game.black_long_castle = false;
+    }
+    if piece_ind == 29 {
+        game.black_short_castle = false;
+    }
+}
+
+
+pub fn fix_en_passant_flag(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
+    let piece_type = get_piece_type(game, piece_ind);
+    let color = get_piece_color(game, piece_ind);
+    if (piece_type == PieceType::Pawn) && (color == Color::White) && (row_fn - row_st == 2) {
+        game.enpassant_sq = Some((row_fn, col_fn));
+    } else if (piece_type == PieceType::Pawn) && (color == Color::Black) && (row_st - row_fn == 2) {
+        game.enpassant_sq = Some((row_fn, col_fn));
+    } else {
+        game.enpassant_sq = None;
+    }
+}
+
+
+pub fn make_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, promotion : Option<PieceType>) {
+    let piece_ind_opt = get_piece_ind(game, row_st, col_st);
+    assert!(piece_ind_opt != None);
+    let piece_ind = piece_ind_opt.unwrap();
+
+    if is_free(game, row_fn, col_fn) {
+        if get_piece_type(game, piece_ind) == PieceType::Pawn && 
+        (is_pawn_shape_en_passant_wht(row_st, col_st, row_fn, col_fn) || is_pawn_shape_en_passant_blck(row_st, col_st, row_fn, col_fn)) {
+            assert!(is_opponent(game, row_st, col_fn, game.active_color));
+            take_piece(game, row_st, col_fn);
+        }
+
+        fix_castling_flags(game, row_st, col_st, row_fn, col_fn, piece_ind);
+        fix_en_passant_flag(game, row_st, col_st, row_fn, col_fn, piece_ind);
+
+        game.rule50_clock = if get_piece_type(game, piece_ind) == PieceType::Pawn {0} else {game.rule50_clock + 1};
+    } else {
+        assert!(is_opponent(game, row_fn, col_fn, game.active_color));
+        take_piece(game, row_fn, col_fn);
+
+        game.rule50_clock = 0;
+    }
+    move_piece(game, piece_ind, row_st, col_st, row_fn, col_fn);
+
+    if let Some(promotion_type) = promotion {
+        game.piece_set[piece_ind as usize].piece_type = promotion_type;
+    }
+
+    game.move_number += 1;
+    game.active_color = if game.active_color == Color::White {Color::Black} else {Color::White};
 
 }
 
 
-pub fn gen_all_moves(game : &Game) {
 
-}
 
 
 

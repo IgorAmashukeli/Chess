@@ -1,5 +1,6 @@
 use crate::cell::Cell;
-use crate::game::moves::is_under_check;
+use crate::game::cli::{game_to_str, print_current_state, print_moves};
+use crate::game::moves::{gen_all_moves, is_under_check};
 use crate::game::reachable::*;
 use crate::piece::{Color, PieceType, Piece, };
 
@@ -7,6 +8,8 @@ pub mod moves;
 pub mod shapes;
 pub mod reachable;
 pub mod free;
+pub mod generate;
+pub mod cli;
 
 pub type Board = [[Cell; 8]; 8];
 pub type PieceSet = [Piece; 32];
@@ -113,7 +116,7 @@ impl Game {
     }
 
     pub fn play(&self) {
-         
+        print_current_state(&self);
          
     }
 

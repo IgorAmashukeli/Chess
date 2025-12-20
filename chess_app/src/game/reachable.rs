@@ -4,7 +4,11 @@ pub fn is_correct_cell(row : u8, col : u8) -> bool {
     row <= 7 && col <= 7
 }
 
-pub fn cell_to_str(row: u8, col: u8) -> String {
+pub fn is_correct_cell_i(row : i8, col : i8) -> bool {
+    row >= 0 && row <= 7 && col >= 0 && col <= 7
+}
+
+pub fn cell_to_coord(row: u8, col: u8) -> String {
     static FILES: &[u8; 8] = b"abcdefgh";
     format!("{}{}", FILES[col as usize] as char, row + 1)
 }
