@@ -1,8 +1,12 @@
 use crate::{game::{Game, free::*, generate::* , reachable::*, shapes::* }, piece::*};
-use std::{cmp, collections::HashMap};
+use std::{collections::HashMap};
 
 static WHITE_KING_IND : u8 = 15;
 static BLACK_KING_IND : u8 = 31;
+static WHITE_ROOK_QUEEN_IND : u8 = 12;
+static WHITE_ROOK_KING_IND : u8 = 13;
+static BLACK_ROOK_QUEEN_IND : u8 = 28;
+static BLACK_ROOK_KING_IND : u8 = 29;
 
 
 pub fn is_under_check(game : &Game) -> bool {
@@ -80,15 +84,23 @@ pub fn try_to_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_
 
 
 pub fn is_king_and_between_under_check(game : &Game, row_st : u8, col_st : u8, col_fn : u8) -> bool {
-    let dist = cmp::max(col_st, col_fn) - cmp::min(col_st, col_fn);
     if is_under_check(game) {
         return true;
     }
-    for i in 1..dist {
-        if is_after_move_under_check(game, row_st, col_st, row_st, col_st + i) {
-            return true;
+    if col_st < col_fn {
+        for i in 1..3 {
+            if is_after_move_under_check(game, row_st, col_st, row_st, col_st + i) {
+                return true;
+            }
+        }
+    } else {
+        for i in 1..4 {
+            if is_after_move_under_check(game, row_st, col_st, row_st, col_st - i) {
+                return true;
+            }
         }
     }
+    
 
     return false;
 }
@@ -98,6 +110,7 @@ pub fn can_move(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8
     if !is_correct_cell(row_st, col_st) || !is_correct_cell(row_fn, col_fn) {
         return false;
     }
+
 
     if !is_reachable(game, row_st, col_st, row_fn, col_fn) {
         return false;
@@ -126,6 +139,7 @@ pub fn can_move(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8
 
     if (piece_type == PieceType::Pawn) && is_pawn_shape_en_passant_blck(row_st, col_st, row_fn, col_fn) && 
     is_free(game, row_fn, col_fn) {
+
         if game.enpassant_sq == None {
             return false;
         }
@@ -281,6 +295,16 @@ pub fn make_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn
         game.rule50_clock = 0;
     }
     move_piece(game, piece_ind, row_st, col_st, row_fn, col_fn);
+
+    if get_piece_type(game, piece_ind) == PieceType::King && is_king_wh_shrt_castle_shape(row_st, col_st, row_fn, col_fn) {
+        move_piece(game, WHITE_ROOK_KING_IND, 0, 7, 0, 5);
+    } else if get_piece_type(game, piece_ind) == PieceType::King && is_king_wh_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
+        move_piece(game, WHITE_ROOK_QUEEN_IND, 0, 0, 0, 3);
+    } else if get_piece_type(game, piece_ind) == PieceType::King && is_king_blck_shrt_castle_shape(row_st, col_st, row_fn, col_fn) {
+        move_piece(game, BLACK_ROOK_KING_IND, 7, 7, 7, 5);
+    } else if get_piece_type(game, piece_ind) == PieceType::King && is_king_blck_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
+        move_piece(game, BLACK_ROOK_QUEEN_IND, 7, 0, 7, 3);
+    }
 
     if let Some(promotion_type) = promotion {
         game.piece_set[piece_ind as usize].piece_type = promotion_type;

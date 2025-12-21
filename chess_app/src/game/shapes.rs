@@ -67,7 +67,7 @@ pub fn is_pawn_shape_en_passant_wht(row_st : u8, col_st : u8, row_fn : u8, col_f
 }
 
 pub fn is_pawn_shape_en_passant_blck(row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
-    return row_st == 5 && row_fn == 4 && (cmp::max(col_fn, col_st) - cmp::min(col_fn, col_st) == 1);
+    return row_st == 3 && row_fn == 2 && (cmp::max(col_fn, col_st) - cmp::min(col_fn, col_st) == 1);
 }
 
 

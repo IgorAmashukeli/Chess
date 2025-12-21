@@ -87,6 +87,7 @@ pub fn is_reachable_king(game :&Game, row_st : u8, col_st : u8, row_fn : u8, col
     }
 
     if is_king_blck_shrt_castle_shape(row_st, col_st, row_fn, col_fn) || is_king_blck_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
+
         return get_piece_color(game, piece_ind) == Color::Black && is_free_on_path_castling(game, row_st, col_st, col_fn);
     }
 
@@ -169,6 +170,7 @@ pub fn is_reachable_color(game : &Game, row_st : u8, col_st : u8, row_fn : u8, c
 pub fn is_reachable(game :&Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
     assert!(is_correct_cell(row_st, col_st));
     assert!(is_correct_cell(row_fn, col_fn));
+
 
     if let Some(piece_ind) = get_piece_ind(game, row_st, col_st) {
         if get_piece_color(game, piece_ind) != game.active_color {

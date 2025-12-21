@@ -14,41 +14,66 @@ pub fn cell_to_str(game : &Game, row : u8, col : u8) -> String {
     let piece_type = get_piece_type(game, piece_ind);
 
     match piece_type {
-        PieceType::Knight => if color == Color::White {"N".to_string()} else {"n".to_string()},
-        PieceType::Bishop => if color == Color::White {"B".to_string()} else {"b".to_string()},
-        PieceType::Rook => if color == Color::White {"R".to_string()} else {"r".to_string()},
-        PieceType::Queen => if color == Color::White {"Q".to_string()} else {"q".to_string()},
-        PieceType::King => if color == Color::White {"K".to_string()} else {"k".to_string()},
-        PieceType::Pawn => if color == Color::White {"P".to_string()} else {"p".to_string()},
+        PieceType::Knight => if color == Color::Black {"♘".to_string()} else {"♞".to_string()},
+        PieceType::Bishop => if color == Color::Black {"♗".to_string()} else {"♝".to_string()},
+        PieceType::Rook => if color == Color::Black {"♖".to_string()} else {"♜".to_string()},
+        PieceType::Queen => if color == Color::Black {"♕".to_string()} else {"♛".to_string()},
+        PieceType::King => if color == Color::Black {"♔".to_string()} else {"♚".to_string()},
+        PieceType::Pawn => if color == Color::Black {"♙".to_string()} else {"♟".to_string()},
     }
 }
 
 
 pub fn game_to_str(game : &Game) -> String {
     let mut result = "".to_string();
-    for i in 0..8 {
-        for j in 0..8 {
-            result += cell_to_str(game, 7 - i, j).as_str();
-            result += " ";
+    if game.active_color == Color::White {
+        for i in 0..8 {
+            for j in 0..8 {
+                result += cell_to_str(game, 7 - i, j).as_str();
+                result += " ";
+            }
+            result += "\n";
         }
-        result += "\n";
+    } else {
+        for i in 0..8 {
+            for j in 0..8 {
+                result += cell_to_str(game, i, 7 - j).as_str();
+                result += " ";
+            }
+            result += "\n";
+        }
     }
 
     return result;
 }
 
 pub fn print_moves(game : &Game) {
-    println!("Possible moves:\n");
     let res = gen_all_moves(game);
-    let mut count = 1;
-    for elem in res {
-        println!("{}) {}", count, elem);
-        count += 1;
+    if res.len() > 0 {
+        println!("Possible moves:\n");
+        
+        let mut count = 1;
+        for elem in res {
+            print!("{}) {}", count, elem);
+            if count % 5 == 0 {
+                println!();
+            } else {
+                print!("  ");
+            }
+            count += 1;
+        }
+        if (count - 1) % 5 != 0 {
+            println!();
+        }
+    } else {
+        println!("No possible moves\n");
     }
 }
 
 
 pub fn print_current_state(game : &Game) {
+    println!("\nThe number of move is {}\n", game.move_number);
+    println!("The active player is {:?}\n", game.active_color);
     println!("{}", game_to_str(game));
     print_moves(game);
 }
@@ -131,15 +156,15 @@ pub fn read_u32() -> Option<u32> {
 }
 
 pub fn read_u32_until_valid(val : &mut Option<u32>, limit : u32) {
-    println!("\nSelect the number of move from the list");
+    println!("\nSelect the number of move from the list\n");
     while val.is_none() {
         *val = read_u32();
         if val.is_none() {
-            println!("Wrong input, not a number, try again");
+            println!("\nWrong input, not a number, try again\n");
             continue;
         }
         if val.unwrap() > limit {
-            println!("Wrong input, too big number, try again");
+            println!("\nWrong input, too big number, try again\n");
             continue;
         }
     }
