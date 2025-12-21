@@ -1,5 +1,5 @@
 use crate::cell::Cell;
-use crate::game::cli::{game_to_str, get_move, move_to_values, position_to_prefen, print_current_state, print_moves, read_u32_until_valid};
+use crate::game::cli::{ get_move, position_to_prefen, print_current_state};
 use crate::game::moves::{can_move, gen_all_moves, is_under_check, make_move};
 use crate::piece::{Color, PieceType, Piece, };
 use std::collections::HashMap;
@@ -144,21 +144,24 @@ impl Game {
         }
     }
 
-    pub fn play(&mut self) -> GameWinner {
+    pub fn play_cli(&mut self) -> GameWinner {
         
-        while true {
+        while self.rule50_clock <= 100 {
 
             // get all moves
             let moves = gen_all_moves(self);
+
+            // print board and all possible moves in cli
+            print_current_state(self);
 
 
             // if no moves => checkmate/stalemate
             if moves.is_empty() {
                 if is_under_check(self) {
                     if self.active_color == Color::White {
-                        return GameWinner::White;
-                    } else {
                         return GameWinner::Black;
+                    } else {
+                        return GameWinner::White;
                     }
                 } else {
                     return GameWinner::Draw;
@@ -170,7 +173,7 @@ impl Game {
                 return GameWinner::Draw;
             }
 
-            // insert current position to hashmap
+            // increase current position count
             // if it already has at least 2 repetitons, draw
             let prefen = position_to_prefen(self);
             if let Some(count) = self.prefen_map.get_mut(&prefen) {
@@ -183,8 +186,7 @@ impl Game {
                 self.prefen_map.insert(prefen, 1);
             }
 
-            // print board and all possible moves in cli
-            print_current_state(self);
+            
 
             // get the move from cli
             let (row_st, col_st, row_fn, col_fn, promotion_type) = get_move(&moves);

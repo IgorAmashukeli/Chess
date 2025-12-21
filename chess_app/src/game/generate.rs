@@ -82,7 +82,7 @@ pub fn gen_all_moves_king(game : &Game, row_st : u8, col_st : u8,
     for i in dx {
         for j in dx {
             let row_fn = row_st as i8 + i;
-            let col_fn = col_st as i8 + i;
+            let col_fn = col_st as i8 + j;
             if (i != 0 || j != 0) && is_correct_cell_i(row_fn, col_fn) {
                 if can_move(game, row_st, col_st, row_fn as u8, col_fn as u8) {
                     add_move(row_st, col_st, row_fn as u8, col_fn as u8, res);

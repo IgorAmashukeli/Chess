@@ -83,11 +83,11 @@ pub fn is_reachable_king(game :&Game, row_st : u8, col_st : u8, row_fn : u8, col
     }
 
     if is_king_wh_shrt_castle_shape(row_st, col_st, row_fn, col_fn) || is_king_wh_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
-        return get_piece_color(game, piece_ind) == Color::White && is_free_on_path_castling(game, row_st, col_st, row_fn, col_fn);
+        return get_piece_color(game, piece_ind) == Color::White && is_free_on_path_castling(game, row_st, col_st, col_fn);
     }
 
     if is_king_blck_shrt_castle_shape(row_st, col_st, row_fn, col_fn) || is_king_blck_lng_castle_shape(row_st, col_st, row_fn, col_fn) {
-        return get_piece_color(game, piece_ind) == Color::Black && is_free_on_path_castling(game, row_st, col_st, row_fn, col_fn);
+        return get_piece_color(game, piece_ind) == Color::Black && is_free_on_path_castling(game, row_st, col_st, col_fn);
     }
 
     return false;
@@ -99,8 +99,8 @@ pub fn is_reachable_pawn(game :&Game, row_st : u8, col_st : u8, row_fn : u8, col
     assert!(get_piece_type(game, piece_ind) == PieceType::Pawn);
     if is_pawn_shape_move_wht(row_st, col_st, row_fn, col_fn) {
         let piece_color = get_piece_color(game, piece_ind);
-        return piece_color == piece::Color::White && is_free_or_opponent(game, row_fn, col_fn, piece_color) && 
-        is_free_on_path_move_pawn(game, row_st, col_st, row_fn, col_fn);
+        return piece_color == piece::Color::White && is_free(game, row_fn, col_fn) && 
+        is_free_on_path_move_pawn(game, row_st, col_st, row_fn);
     }
 
     if is_pawn_shape_take_wht(row_st, col_st, row_fn, col_fn) {
@@ -121,8 +121,8 @@ pub fn is_reachable_pawn(game :&Game, row_st : u8, col_st : u8, row_fn : u8, col
 
     if is_pawn_shape_move_blck(row_st, col_st, row_fn, col_fn) {
         let piece_color = get_piece_color(game, piece_ind);
-        return piece_color == Color::Black && is_free_or_opponent(game, row_fn, col_fn, piece_color) && 
-        is_free_on_path_move_pawn(game, row_st, col_st, row_fn, col_fn);
+        return piece_color == Color::Black && is_free(game, row_fn, col_fn) && 
+        is_free_on_path_move_pawn(game, row_st, col_st, row_fn);
     }
 
     if is_pawn_shape_take_blck(row_st, col_st, row_fn, col_fn) {

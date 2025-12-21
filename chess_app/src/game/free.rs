@@ -1,4 +1,4 @@
-use crate::{game::{Game, reachable::is_correct_cell}, piece::{self, Color}};
+use crate::{game::{Game, reachable::is_correct_cell}, piece::Color};
 use std::cmp;
 
 pub fn is_free(game : &Game, row : u8, col : u8) -> bool {
@@ -88,9 +88,9 @@ pub fn is_free_on_path_queen(game : &Game, row_st : u8, col_st : u8, row_fn : u8
 }
 
 
-pub fn is_free_on_path_castling(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+pub fn is_free_on_path_castling(game : &Game, row_st : u8, col_st : u8, col_fn : u8) -> bool {
     let dist_col = cmp::max(col_st, col_fn) - cmp::min(col_st, col_fn);
-    for i in 1..dist_col {
+    for i in 1..dist_col + 1 {
         let row_ind = row_st;
         let col_ind = cmp::min(col_st, col_fn) + i;
         if !is_free(game, row_ind, col_ind) {
@@ -101,7 +101,7 @@ pub fn is_free_on_path_castling(game : &Game, row_st : u8, col_st : u8, row_fn :
 }
 
 
-pub fn is_free_on_path_move_pawn(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
+pub fn is_free_on_path_move_pawn(game : &Game, row_st : u8, col_st : u8, row_fn : u8) -> bool {
     let dist_row = cmp::max(row_st, row_fn) - cmp::min(row_st, row_fn);
     if dist_row == 2 {
         return is_free(game, cmp::min(row_st, row_fn) + 1, col_st);

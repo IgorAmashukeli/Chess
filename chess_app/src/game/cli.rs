@@ -1,5 +1,5 @@
-use crate::{game::{Game, moves::*, reachable::*}, piece::{self, *}};
-use std::io::{self, stdin, BufRead};
+use crate::{game::{Game, moves::*, reachable::*}, piece::*};
+use std::io::{self, BufRead};
 
 pub fn cell_to_str(game : &Game, row : u8, col : u8) -> String {
     let piece_ind_opt = get_piece_ind(game, row, col);
@@ -131,7 +131,7 @@ pub fn read_u32() -> Option<u32> {
 }
 
 pub fn read_u32_until_valid(val : &mut Option<u32>, limit : u32) {
-    println!("Select the number of move from the list");
+    println!("\nSelect the number of move from the list");
     while val.is_none() {
         *val = read_u32();
         if val.is_none() {

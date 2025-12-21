@@ -1,5 +1,3 @@
-use crate::{piece::Color};
-
 #[derive(Copy, Clone, Debug)]
 pub struct Cell {
     pub piece : Option<u8>,
