@@ -1,9 +1,10 @@
 use crate::cell::Cell;
-use crate::game::cli::{game_to_str, print_current_state, print_moves};
-use crate::game::moves::{gen_all_moves, is_under_check};
-use crate::game::reachable::*;
+use crate::game::cli::{game_to_str, get_move, move_to_values, position_to_prefen, print_current_state, print_moves, read_u32_until_valid};
+use crate::game::moves::{can_move, gen_all_moves, is_under_check, make_move};
 use crate::piece::{Color, PieceType, Piece, };
+use std::collections::HashMap;
 
+use std::fmt;
 pub mod moves;
 pub mod shapes;
 pub mod reachable;
@@ -13,6 +14,30 @@ pub mod cli;
 
 pub type Board = [[Cell; 8]; 8];
 pub type PieceSet = [Piece; 32];
+
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+
+pub enum GameWinner {
+    White,
+    Black,
+    Draw,
+}
+
+impl fmt::Display for GameWinner {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Use write! to format the output into the formatter f
+        match *self {
+            GameWinner::White => write!(f, "{}", "White Won"),
+            GameWinner::Black => write!(f, "{}", "Black Won"),
+            GameWinner::Draw =>  write!(f, "{}", "Draw"),
+        }
+        
+    }
+}
+
+
+
 
 #[derive(Debug)]
 pub struct Game {
@@ -26,6 +51,7 @@ pub struct Game {
     enpassant_sq : Option<(u8, u8)>,
     rule50_clock : u32,
     move_number : u32,
+    prefen_map : HashMap<String, u32>,
 }
 
 impl Default for Game {
@@ -93,7 +119,8 @@ impl Default for Game {
             black_long_castle : true,
             enpassant_sq : None,
             rule50_clock : 0,
-            move_number : 1
+            move_number : 1,
+            prefen_map : HashMap::new()
         }
     }
 }
@@ -104,20 +131,76 @@ impl Game {
         white_short_castle : bool, white_long_castle : bool,
         black_short_castle : bool, black_long_castle : bool,
         enpassant_sq : Option<(u8, u8)>, rule50_clock : u32,
-        move_number : u32
+        move_number : u32,
+        prefen_map : HashMap<String, u32>
     ) -> Game {
         Game{board, piece_set,
             active_color,
             white_short_castle, white_long_castle,
             black_short_castle, black_long_castle,
             enpassant_sq, rule50_clock,
-            move_number
+            move_number,
+            prefen_map
         }
     }
 
-    pub fn play(&self) {
-        print_current_state(&self);
-         
+    pub fn play(&mut self) -> GameWinner {
+        
+        while true {
+
+            // get all moves
+            let moves = gen_all_moves(self);
+
+
+            // if no moves => checkmate/stalemate
+            if moves.is_empty() {
+                if is_under_check(self) {
+                    if self.active_color == Color::White {
+                        return GameWinner::White;
+                    } else {
+                        return GameWinner::Black;
+                    }
+                } else {
+                    return GameWinner::Draw;
+                }
+            }
+
+            // if rule 50 works, draw
+            if self.rule50_clock == 100 {
+                return GameWinner::Draw;
+            }
+
+            // insert current position to hashmap
+            // if it already has at least 2 repetitons, draw
+            let prefen = position_to_prefen(self);
+            if let Some(count) = self.prefen_map.get_mut(&prefen) {
+                if *count >= 2 {
+                    return GameWinner::Draw;
+                } else {
+                    *count += 1;
+                }
+            } else {
+                self.prefen_map.insert(prefen, 1);
+            }
+
+            // print board and all possible moves in cli
+            print_current_state(self);
+
+            // get the move from cli
+            let (row_st, col_st, row_fn, col_fn, promotion_type) = get_move(&moves);
+
+            // assert it is a correct move (due to the fact it was taken directly from the list of all possible)
+            assert!(can_move(self, row_st, col_st, row_fn, col_fn));
+            
+            // move
+            make_move(self, row_st, col_st, row_fn, col_fn, promotion_type);
+
+
+
+        }
+
+        // should not be reachable
+        return GameWinner::Draw;
     }
 
 }

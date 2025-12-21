@@ -1,6 +1,6 @@
 use crate::{game::{Game, free::*, generate::* , reachable::*, shapes::* }, piece::{self, *}};
 use crate::{game::shapes};
-use std::cmp;
+use std::{cmp, collections::HashMap};
 
 static WHITE_KING_IND : u8 = 15;
 static BLACK_KING_IND : u8 = 31;
@@ -39,7 +39,7 @@ pub fn is_under_check(game : &Game) -> bool {
 
 pub fn is_after_move_under_check(game : &Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8) -> bool {
     let mut game_after_move = Game::new(game.board, game.piece_set, game.active_color, game.white_short_castle, game.white_long_castle, 
-        game.black_short_castle, game.black_long_castle, game.enpassant_sq, game.rule50_clock, game.move_number);
+        game.black_short_castle, game.black_long_castle, game.enpassant_sq, game.rule50_clock, game.move_number, HashMap::new());
     try_to_move(&mut game_after_move, row_st, col_st, row_fn, col_fn);
     return is_under_check(&game_after_move);
 }
@@ -216,7 +216,7 @@ pub fn gen_all_moves(game : &Game) -> Vec<String> {
 }
 
 
-pub fn fix_castling_flags(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
+pub fn change_castling_flags(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
     let piece_type = get_piece_type(game, piece_ind);
     let color = get_piece_color(game, piece_ind);
     if (piece_type == PieceType::King) && (color == Color::White)
@@ -244,7 +244,7 @@ pub fn fix_castling_flags(game : &mut Game, row_st : u8, col_st : u8, row_fn : u
 }
 
 
-pub fn fix_en_passant_flag(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
+pub fn change_en_passant_flag(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, piece_ind : u8) {
     let piece_type = get_piece_type(game, piece_ind);
     let color = get_piece_color(game, piece_ind);
     if (piece_type == PieceType::Pawn) && (color == Color::White) && (row_fn - row_st == 2) {
@@ -263,16 +263,19 @@ pub fn make_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn
     let piece_ind = piece_ind_opt.unwrap();
 
     if is_free(game, row_fn, col_fn) {
+
+        
+
         if get_piece_type(game, piece_ind) == PieceType::Pawn && 
         (is_pawn_shape_en_passant_wht(row_st, col_st, row_fn, col_fn) || is_pawn_shape_en_passant_blck(row_st, col_st, row_fn, col_fn)) {
             assert!(is_opponent(game, row_st, col_fn, game.active_color));
             take_piece(game, row_st, col_fn);
         }
 
-        fix_castling_flags(game, row_st, col_st, row_fn, col_fn, piece_ind);
-        fix_en_passant_flag(game, row_st, col_st, row_fn, col_fn, piece_ind);
+        change_castling_flags(game, row_st, col_st, row_fn, col_fn, piece_ind);
+        change_en_passant_flag(game, row_st, col_st, row_fn, col_fn, piece_ind);
 
-        game.rule50_clock = if get_piece_type(game, piece_ind) == PieceType::Pawn {0} else {game.rule50_clock + 1};
+        game.rule50_clock = if get_piece_type(game, piece_ind) == PieceType::Pawn {1} else {game.rule50_clock + 1};
     } else {
         assert!(is_opponent(game, row_fn, col_fn, game.active_color));
         take_piece(game, row_fn, col_fn);
@@ -285,7 +288,7 @@ pub fn make_move(game : &mut Game, row_st : u8, col_st : u8, row_fn : u8, col_fn
         game.piece_set[piece_ind as usize].piece_type = promotion_type;
     }
 
-    game.move_number += 1;
+    game.move_number += if game.active_color == Color::White {0} else {1}; 
     game.active_color = if game.active_color == Color::White {Color::Black} else {Color::White};
 
 }

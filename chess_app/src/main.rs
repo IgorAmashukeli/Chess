@@ -10,8 +10,8 @@ use game::moves;
 fn main() {
 
 
-    let my_game = game::Game::default();
-    my_game.play();
-
+    let mut my_game = game::Game::default();
+    let result = my_game.play();
+    println!("{}", result);
     
 }

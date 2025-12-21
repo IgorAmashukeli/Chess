@@ -119,7 +119,7 @@ pub fn gen_all_moves_king(game : &Game, row_st : u8, col_st : u8,
 
 pub fn add_promotion_move(row_st : u8, col_st : u8, row_fn : u8, col_fn : u8, res : &mut Vec<String>) {
     let cell_fn = cell_to_coord(row_fn, col_fn);
-    let pieces  = ["kn", "b", "r", "q"];
+    let pieces  = ["n", "b", "r", "q"];
     for piece in pieces {
         res.push(cell_to_coord(row_st, col_st) + " " + cell_fn.as_str() + " " + piece);
     }
