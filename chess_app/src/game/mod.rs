@@ -1,6 +1,6 @@
 use crate::cell::Cell;
-use crate::game::cli::{ get_move, position_to_prefen, print_current_state};
-use crate::game::moves::{can_move, gen_all_moves, is_under_check, make_move};
+use crate::game::cli::{ ACCEPT_DRAW, OFFER_DRAW, RESIGN, get_move, position_to_prefen, print_current_state, print_moves, process_offer_draw};
+use crate::game::moves::{add_offers, can_move, gen_all_moves, is_under_check, make_move};
 use crate::piece::{Color, PieceType, Piece, };
 use std::collections::HashMap;
 
@@ -35,6 +35,7 @@ impl fmt::Display for GameWinner {
         
     }
 }
+
 
 
 
@@ -145,13 +146,15 @@ impl Game {
     }
 
     pub fn play_cli(&mut self) -> GameWinner {
+
+        let mut was_draw_offer = false;
         
         while self.rule50_clock <= 100 {
 
             // get all moves
-            let moves = gen_all_moves(self);
+            let mut moves = gen_all_moves(self);
 
-            // print board and all possible moves in cli
+            // print board
             print_current_state(self);
 
 
@@ -186,10 +189,33 @@ impl Game {
                 self.prefen_map.insert(prefen, 1);
             }
 
-            
+            // add draw and resign offers
+            add_offers(&mut moves, was_draw_offer);
+
+            // print all possible moves
+            print_moves(&moves);
 
             // get the move from cli
-            let (row_st, col_st, row_fn, col_fn, promotion_type) = get_move(&moves);
+            let (mut row_st, mut col_st, mut row_fn, mut col_fn, mut promotion_type) = get_move(&moves);
+
+            // process offer/accept/resign
+            if row_st == OFFER_DRAW {
+
+                process_offer_draw(&mut was_draw_offer);
+                moves = gen_all_moves(self);
+                print_moves(&moves);
+                (row_st, col_st, row_fn, col_fn, promotion_type) = get_move(&moves);
+
+            } else if row_st == ACCEPT_DRAW {
+                return GameWinner::Draw;
+            } else if (row_st == RESIGN) && (self.active_color == Color::White) {
+                return GameWinner::Black;
+            } else if (row_st == RESIGN) && (self.active_color == Color::Black) {
+                return GameWinner::White;
+            } else {
+                was_draw_offer = false;
+            }
+
 
             // assert it is a correct move (due to the fact it was taken directly from the list of all possible)
             assert!(can_move(self, row_st, col_st, row_fn, col_fn));

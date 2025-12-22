@@ -1,5 +1,10 @@
-use crate::{game::{Game, moves::*, reachable::*}, piece::*};
+use crate::{game::{Game, reachable::*}, piece::*};
 use std::io::{self, BufRead};
+
+pub const OFFER_DRAW : u8 = 100;
+pub const RESIGN : u8 = 101;
+pub const ACCEPT_DRAW : u8 = 102;
+
 
 pub fn cell_to_str(game : &Game, row : u8, col : u8) -> String {
     let piece_ind_opt = get_piece_ind(game, row, col);
@@ -47,26 +52,21 @@ pub fn game_to_str(game : &Game) -> String {
     return result;
 }
 
-pub fn print_moves(game : &Game) {
-    let res = gen_all_moves(game);
-    if res.len() > 0 {
-        println!("Possible moves:\n");
-        
-        let mut count = 1;
-        for elem in res {
-            print!("{}) {}", count, elem);
-            if count % 5 == 0 {
-                println!();
-            } else {
-                print!("  ");
-            }
-            count += 1;
-        }
-        if (count - 1) % 5 != 0 {
+pub fn print_moves(moves : &Vec<String>) {
+    println!("Possible moves:\n");
+    
+    let mut count = 1;
+    for elem in moves {
+        print!("{}) {}", count, elem);
+        if count % 5 == 0 {
             println!();
+        } else {
+            print!("  ");
         }
-    } else {
-        println!("No possible moves\n");
+        count += 1;
+    }
+    if (count - 1) % 5 != 0 {
+        println!();
     }
 }
 
@@ -75,7 +75,6 @@ pub fn print_current_state(game : &Game) {
     println!("\nThe number of move is {}\n", game.move_number);
     println!("The active player is {:?}\n", game.active_color);
     println!("{}", game_to_str(game));
-    print_moves(game);
 }
 
 
@@ -240,8 +239,23 @@ pub fn get_move(moves : &Vec<String>) -> (u8, u8, u8, u8, Option<PieceType>) {
     assert! (ind >= 1);
     
     let piece_move_str = moves[ind as usize - 1].as_str();
+
+    if piece_move_str == "Select the move and offer a draw" {
+        return (OFFER_DRAW, OFFER_DRAW, OFFER_DRAW, OFFER_DRAW, None)
+    } else if piece_move_str == "Resign" {
+        return (RESIGN, RESIGN, RESIGN, RESIGN, None)
+    } else if piece_move_str == "Accept the draw" {
+        return (ACCEPT_DRAW, ACCEPT_DRAW, ACCEPT_DRAW, ACCEPT_DRAW, None)
+    }
+
     let cur_move_opt = move_to_values(piece_move_str);
 
     assert!(cur_move_opt != None);
     return cur_move_opt.unwrap();
+}
+
+
+pub fn process_offer_draw(was_draw : &mut bool) {
+    *was_draw = true;
+    println!("\nOk, after your move, the opponent will get a chance to accept your draw.\n")
 }

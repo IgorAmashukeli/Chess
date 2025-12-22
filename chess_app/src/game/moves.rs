@@ -227,6 +227,15 @@ pub fn gen_all_moves(game : &Game) -> Vec<String> {
     return res;
 }
 
+pub fn add_offers(moves : &mut Vec<String>, was_draw : bool) {
+    if !was_draw {
+        moves.push("Select the move and offer a draw".to_string());
+    } else  {
+        moves.push("Accept the draw".to_string());
+    }
+    moves.push("Resign".to_string());
+}
+
 
 pub fn change_castling_flags(game : &mut Game, piece_ind : u8) {
     let piece_type = get_piece_type(game, piece_ind);
