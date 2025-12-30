@@ -1,3 +1,3 @@
 # Chess in Rust
 
-In progress
+Done the cli

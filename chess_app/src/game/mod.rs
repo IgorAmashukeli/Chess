@@ -37,6 +37,31 @@ impl fmt::Display for GameWinner {
 }
 
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum GameResult {
+    CheckMate,
+    StaleMate,
+    Rule50Draw,
+    TreefoldRepDraw,
+    Resignation,
+    AgreedDraw
+}
+
+
+impl fmt::Display for GameResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Use write! to format the output into the formatter f
+        match *self {
+            GameResult::CheckMate => write!(f, "{}", "CheckMate"),
+            GameResult::StaleMate => write!(f, "{}", "StaleMate"),
+            GameResult::Rule50Draw =>  write!(f, "{}", "50 moves without pawn and take moves"),
+            GameResult::TreefoldRepDraw => write!(f, "{}", "Threefold repetition of position"),
+            GameResult::Resignation => write!(f, "{}", "Resignation"),
+            GameResult::AgreedDraw =>  write!(f, "{}", "Draw is Agreed"),
+        }
+        
+    }
+}
 
 
 
@@ -145,7 +170,7 @@ impl Game {
         }
     }
 
-    pub fn play_cli(&mut self) -> GameWinner {
+    pub fn play_cli(&mut self) -> (GameResult, GameWinner, u32) {
 
         let mut was_draw_offer = false;
         
@@ -162,18 +187,18 @@ impl Game {
             if moves.is_empty() {
                 if is_under_check(self) {
                     if self.active_color == Color::White {
-                        return GameWinner::Black;
+                        return (GameResult::CheckMate, GameWinner::Black, self.move_number);
                     } else {
-                        return GameWinner::White;
+                        return (GameResult::CheckMate, GameWinner::White, self.move_number);
                     }
                 } else {
-                    return GameWinner::Draw;
+                    return (GameResult::StaleMate, GameWinner::Draw, self.move_number);
                 }
             }
 
             // if rule 50 works, draw
             if self.rule50_clock == 100 {
-                return GameWinner::Draw;
+                return (GameResult::Rule50Draw, GameWinner::Draw, self.move_number);
             }
 
             // increase current position count
@@ -181,7 +206,7 @@ impl Game {
             let prefen = position_to_prefen(self);
             if let Some(count) = self.prefen_map.get_mut(&prefen) {
                 if *count >= 2 {
-                    return GameWinner::Draw;
+                    return (GameResult::TreefoldRepDraw, GameWinner::Draw, self.move_number);
                 } else {
                     *count += 1;
                 }
@@ -207,11 +232,11 @@ impl Game {
                 (row_st, col_st, row_fn, col_fn, promotion_type) = get_move(&moves);
 
             } else if row_st == ACCEPT_DRAW {
-                return GameWinner::Draw;
+                return (GameResult::AgreedDraw, GameWinner::Draw, self.move_number);
             } else if (row_st == RESIGN) && (self.active_color == Color::White) {
-                return GameWinner::Black;
+                return (GameResult::Resignation, GameWinner::Black, self.move_number);
             } else if (row_st == RESIGN) && (self.active_color == Color::Black) {
-                return GameWinner::White;
+                return (GameResult::Resignation, GameWinner::White, self.move_number);
             } else {
                 was_draw_offer = false;
             }
@@ -228,7 +253,7 @@ impl Game {
         }
 
         // should not be reachable
-        return GameWinner::Draw;
+        return (GameResult::Rule50Draw, GameWinner::Draw, self.move_number);
     }
 
 }

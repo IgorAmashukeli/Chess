@@ -190,7 +190,7 @@ pub fn gen_all_moves_pawn(game : &Game, row_st : u8, col_st : u8, res : &mut Vec
         col_fn = col_st as i8 - 1;
         if is_correct_cell_i(row_fn, col_fn) {
             if can_move(game, row_st, col_st, row_fn as u8, col_fn as u8) {
-                add_pawn_move(Color::Black, row_st, col_st, row_fn as u8, row_fn as u8, res);
+                add_pawn_move(Color::Black, row_st, col_st, row_fn as u8, col_fn as u8, res);
             }
         }
     }
