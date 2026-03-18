@@ -1,16 +1,15 @@
-
-
-mod ui;
 mod piece;
 mod cell;
 mod game;
 
+use crate::game::Game;
 
-fn main() -> Result<(), eframe::Error> {
-    let options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "Chess App",
-        options,
-        Box::new(|_cc| Ok(Box::new(ui::MyApp::default()))),
-    )
+
+
+fn main() {
+    let mut game = Game::default();
+
+    let ans = game.play_cli();
+
+    println!("{}. {}", ans.1, ans.0);
 }

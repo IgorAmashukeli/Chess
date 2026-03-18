@@ -9,7 +9,11 @@ pub const ACCEPT_DRAW : u8 = 102;
 pub fn cell_to_str(game : &Game, row : u8, col : u8) -> String {
     let piece_ind_opt = get_piece_ind(game, row, col);
     if piece_ind_opt == None {
-        return ".".to_string();
+        if (row + col) % 2 == 1 {
+            return "🟡".to_string();
+        }
+        return "🟤".to_string();
+        
     }
 
     let piece_ind = piece_ind_opt.unwrap();
@@ -19,12 +23,12 @@ pub fn cell_to_str(game : &Game, row : u8, col : u8) -> String {
     let piece_type = get_piece_type(game, piece_ind);
 
     match piece_type {
-        PieceType::Knight => if color == Color::White {"♘".to_string()} else {"♞".to_string()},
-        PieceType::Bishop => if color == Color::White {"♗".to_string()} else {"♝".to_string()},
-        PieceType::Rook => if color == Color::White {"♖".to_string()} else {"♜".to_string()},
-        PieceType::Queen => if color == Color::White {"♕".to_string()} else {"♛".to_string()},
-        PieceType::King => if color == Color::White {"♔".to_string()} else {"♚".to_string()},
-        PieceType::Pawn => if color == Color::White {"♙".to_string()} else {"♟".to_string()},
+        PieceType::Knight => if color == Color::White {"♘ ".to_string()} else {"♞ ".to_string()},
+        PieceType::Bishop => if color == Color::White {"♗ ".to_string()} else {"♝ ".to_string()},
+        PieceType::Rook => if color == Color::White {"♖ ".to_string()} else {"♜ ".to_string()},
+        PieceType::Queen => if color == Color::White {"♕ ".to_string()} else {"♛ ".to_string()},
+        PieceType::King => if color == Color::White {"♔ ".to_string()} else {"♚ ".to_string()},
+        PieceType::Pawn => if color == Color::White {"♙ ".to_string()} else {"♟ ".to_string()},
     }
 }
 
